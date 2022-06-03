@@ -57,7 +57,8 @@ export default {
       return {
           todos: [],
           unselectedTodos: [],
-          todo: ''
+          todo: '',
+          selectAll: false
       }
   },
 
@@ -80,8 +81,16 @@ export default {
       },
 
       selectAllTasks() {
-          for (let element of this.todos) {
-              element.isDone = !element.isDone;
+          this.selectAll = !this.selectAll;
+
+          if (this.selectAll) {
+              for (let element of this.todos) {
+                  element.isDone = true;
+              }
+          } else {
+              for (let element of this.todos) {
+                  element.isDone = false;
+              }
           }
       }
   },
