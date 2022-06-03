@@ -15,31 +15,32 @@
 
                     <!-- These are here just to show the structure of the list items -->
                     <!-- List items should get the class `editing` when editing and `completed` when marked as completed -->
-                    <li v-for="(element, index) in todos" :key="index" :class="{ 'editing': element.isBeingEdited, 'completed': element.isDone }">
+                    <li v-for="(element, index) in filterTodos" :key="index" :class="{ 'editing': element.isBeingEdited, 'completed': element.isDone }">
                         <div class="view">
                             <input class="toggle" type="checkbox" :checked="element.isDone" @click="element.isDone = !element.isDone">
                             <label @dblclick="editTask(index)">{{ element.title }}</label>
                             <button class="destroy" @click="destroyTask(index)"></button>
                         </div>
-                        <input class="edit" v-model="element.title" @keydown.enter="editTask(index)">
+                        <input :focus="element.isBeingEdited == true" class="edit" v-model="element.title" @keydown.enter="editTask(index)" @blur="editTask(index)">
                     </li>
                 </ul>
             </section>
 
             <!-- This footer should be hidden by default and shown when there are todos -->
             <footer class="footer">
+
                 <!-- This should be `0 items left` by default -->
-                <span class="todo-count"><strong>{{ unselectedTodos.length }}</strong> item left</span>
+                <span class="todo-count"><strong>{{ unselectedTodos.length || 0 }}</strong> item left</span>
                 <!-- Remove this if you don't implement routing -->
                 <ul class="filters">
                     <li>
-                        <a class="selected" href="#/">All</a>
+                        <a class="selected" href="#/" @click="sortKey = 'all'">All</a>
                     </li>
                     <li>
-                        <a href="#/active">Active</a>
+                        <a href="#/active" @click="sortKey = 'unselected'">Active</a>
                     </li>
                     <li>
-                        <a href="#/completed">Completed</a>
+                        <a href="#/completed" @click="sortKey = 'selected'">Completed</a>
                     </li>
                 </ul>
 
@@ -55,10 +56,13 @@
 export default {
   data() {
       return {
+          todo: '',
           todos: [],
           unselectedTodos: [],
-          todo: '',
-          selectAll: false
+          selectedTodos: [],
+
+          selectAll: false,
+          sortKey: 'all'
       }
   },
 
@@ -97,10 +101,25 @@ export default {
 
   beforeUpdate() {
       this.unselectedTodos = [];
+      this.selectedTodos = [];
 
       for (let todo of this.todos) {
           if (!todo.isDone) {
               this.unselectedTodos.push(todo);
+          } else {
+              this.selectedTodos.push(todo);
+          }
+      }
+  },
+
+  computed: {
+      filterTodos() {
+          if (this.sortKey == 'all') {
+              return this.todos;
+          } else if (this.sortKey == 'unselected') {
+              return this.unselectedTodos;
+          } else {
+              return this.selectedTodos;
           }
       }
   }
