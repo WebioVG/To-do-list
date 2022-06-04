@@ -21,16 +21,16 @@
                             <label @dblclick="editTask(index)">{{ element.title }}</label>
                             <button class="destroy" @click="destroyTask(index)"></button>
                         </div>
-                        <input :focus="element.isBeingEdited == true" class="edit" v-model="element.title" @keydown.enter="editTask(index)" @blur="editTask(index)">
+                        <input :ref="changeTask + index" class="edit" v-model="element.title" @keydown.enter="editTask(index)" @blur="editTask(index)">
                     </li>
                 </ul>
             </section>
 
             <!-- This footer should be hidden by default and shown when there are todos -->
-            <footer class="footer">
+            <footer v-if="todos.length > 0" class="footer">
 
                 <!-- This should be `0 items left` by default -->
-                <span class="todo-count"><strong>{{ unselectedTodos.length || 0 }}</strong> item left</span>
+                <span class="todo-count"><strong>{{ todos.filter(element => !element.isDone).length || 0 }}</strong> item left</span>
                 <!-- Remove this if you don't implement routing -->
                 <ul class="filters">
                     <li>
@@ -45,7 +45,7 @@
                 </ul>
 
                 <!-- Hidden if no completed items are left ↓ -->
-                <button v-if="todos.length - unselectedTodos.length > 0" class="clear-completed" @click="clearCompletedTasks">Clear completed</button>
+                <button v-if="todos.filter(element => element.isDone).length > 0" class="clear-completed" @click="clearCompletedTasks">Clear completed</button>
             </footer>
         </section>
     </body>
@@ -58,8 +58,6 @@ export default {
       return {
           todo: '',
           todos: [],
-          unselectedTodos: [],
-          selectedTodos: [],
 
           selectAll: false,
           sortKey: 'all'
@@ -68,12 +66,16 @@ export default {
 
   methods: {
       addTask() {
-          this.todos.push({ title: this.todo, isDone: false, isBeingEdited: false });
-          this.todo = '';
+          if (this.todo != '') {
+              this.todos.push({ title: this.todo, isDone: false, isBeingEdited: false });
+              this.todo = '';
+          }
       },
 
       editTask(index) {
           this.todos[index].isBeingEdited = !this.todos[index].isBeingEdited;
+
+          this.$refs.changeTask+index.focus();
       },
 
       destroyTask(index) {
@@ -99,27 +101,14 @@ export default {
       }
   },
 
-  beforeUpdate() {
-      this.unselectedTodos = [];
-      this.selectedTodos = [];
-
-      for (let todo of this.todos) {
-          if (!todo.isDone) {
-              this.unselectedTodos.push(todo);
-          } else {
-              this.selectedTodos.push(todo);
-          }
-      }
-  },
-
   computed: {
       filterTodos() {
-          if (this.sortKey == 'all') {
-              return this.todos;
+          if (this.sortKey == 'selected') {
+              return this.todos.filter(element => element.isDone);
           } else if (this.sortKey == 'unselected') {
-              return this.unselectedTodos;
+              return this.todos.filter(element => !element.isDone);
           } else {
-              return this.selectedTodos;
+              return this.todos;
           }
       }
   }
