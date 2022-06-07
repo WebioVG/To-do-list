@@ -17,11 +17,11 @@
                     <!-- List items should get the class `editing` when editing and `completed` when marked as completed -->
                     <li v-for="(element, index) in filterTodos" :key="index" :class="{ 'editing': element.isBeingEdited, 'completed': element.isDone }">
                         <div class="view">
-                            <input class="toggle" type="checkbox" :checked="element.isDone" @click="element.isDone = !element.isDone">
+                            <input class="toggle" type="checkbox" :checked="element.isDone" v-model="element.isDone">
                             <label @dblclick="editTask(index)">{{ element.title }}</label>
                             <button class="destroy" @click="destroyTask(index)"></button>
                         </div>
-                        <input :ref="changeTask + index" class="edit" v-model="element.title" @keydown.enter="editTask(index)" @blur="editTask(index)">
+                        <input :ref="'editTask' + index" class="edit" v-model="element.title" @keydown.enter="editTask(index)" @blur="editTask(index)">
                     </li>
                 </ul>
             </section>
@@ -31,16 +31,17 @@
 
                 <!-- This should be `0 items left` by default -->
                 <span class="todo-count"><strong>{{ todos.filter(element => !element.isDone).length || 0 }}</strong> item left</span>
+                
                 <!-- Remove this if you don't implement routing -->
                 <ul class="filters">
                     <li>
-                        <a class="selected" href="#/" @click="sortKey = 'all'">All</a>
+                        <a :class="{ selected: sortKey == 'all' }" href="#/" @click="sortKey = 'all'">All</a>
                     </li>
                     <li>
-                        <a href="#/active" @click="sortKey = 'unselected'">Active</a>
+                        <a :class="{ selected: sortKey == 'unselected' }" href="#/active" @click="sortKey = 'unselected'">Active</a>
                     </li>
                     <li>
-                        <a href="#/completed" @click="sortKey = 'selected'">Completed</a>
+                        <a :class="{ selected: sortKey == 'selected' }" href="#/completed" @click="sortKey = 'selected'">Completed</a>
                     </li>
                 </ul>
 
@@ -52,65 +53,71 @@
 </template>
 
 <script>
-
+// import { nextTick } from '@vue/runtime-core';
 export default {
-  data() {
-      return {
-          todo: '',
-          todos: [],
+    data() {
+        return {
+            todo: '',
+            todos: [],
 
-          selectAll: false,
-          sortKey: 'all'
-      }
-  },
+            selectAll: false,
+            sortKey: 'all'
+        }
+    },
 
-  methods: {
-      addTask() {
-          if (this.todo != '') {
-              this.todos.push({ title: this.todo, isDone: false, isBeingEdited: false });
-              this.todo = '';
-          }
-      },
+    methods: {
+        addTask() {
+            if (this.todo != '') {
+                this.todos.push({ title: this.todo, isDone: false, isBeingEdited: false });
+                this.todo = '';
+            }
+        },
 
-      editTask(index) {
-          this.todos[index].isBeingEdited = !this.todos[index].isBeingEdited;
+        editTask(index) {
+            this.todos[index].isBeingEdited = !this.todos[index].isBeingEdited;
+            console.log(this.$refs['editTask' + index]);
 
-          this.$refs.changeTask+index.focus();
-      },
+            this.$nextTick(() => { 
+                this.$refs['editTask' + index][0].focus();
+            });
 
-      destroyTask(index) {
-          this.todos.splice(index, 1);
-      },
+        },
 
-      clearCompletedTasks() {
-          this.todos = this.todos.filter(element => !element.isDone);
-      },
+        destroyTask(index) {
+            this.todos.splice(index, 1);
+        },
 
-      selectAllTasks() {
-          this.selectAll = !this.selectAll;
+        clearCompletedTasks() {
+            this.todos = this.todos.filter(element => !element.isDone);
+        },
 
-          if (this.selectAll) {
-              for (let element of this.todos) {
-                  element.isDone = true;
-              }
-          } else {
-              for (let element of this.todos) {
-                  element.isDone = false;
-              }
-          }
-      }
-  },
+        selectAllTasks() {
+            this.selectAll = !this.selectAll;
 
-  computed: {
-      filterTodos() {
-          if (this.sortKey == 'selected') {
-              return this.todos.filter(element => element.isDone);
-          } else if (this.sortKey == 'unselected') {
-              return this.todos.filter(element => !element.isDone);
-          } else {
-              return this.todos;
-          }
-      }
+            if (this.selectAll) {
+                for (let element of this.todos) {
+                    element.isDone = true;
+                }
+            } else {
+                for (let element of this.todos) {
+                    element.isDone = false;
+                }
+            }
+        }
+    },
+
+    computed: {
+        filterTodos() {
+            if (this.sortKey == 'selected') {
+                return this.todos.filter(element => element.isDone);
+            }
+
+            if (this.sortKey == 'unselected') {
+                return this.todos.filter(element => !element.isDone);
+            }
+
+            return this.todos;
+        }
   }
 }
 </script>
